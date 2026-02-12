@@ -151,6 +151,19 @@ class TesseractOCR:
         lib.TessDeleteText.restype = None
         lib.TessDeleteText.argtypes = [ctypes.c_void_p]
 
+        # TessVersion() -> const char*
+        lib.TessVersion.restype = ctypes.c_char_p
+        lib.TessVersion.argtypes = []
+
+    def version(self):
+        """
+        Get Tesseract version.
+
+        Returns:
+            Version string (e.g., '5.5.0')
+        """
+        return self.tess_lib.TessVersion().decode('utf-8')
+
     def _init_api(self):
         """Initialize the Tesseract API."""
         self.api = self.tess_lib.TessBaseAPICreate()
@@ -190,18 +203,22 @@ class TesseractOCR:
         """
         self.tess_lib.TessBaseAPISetPageSegMode(self.api, mode)
 
-    def image_to_text(self, image_path, psm=None):
+    def image_to_text(self, image, psm=None):
         """
-        Extract text from an image file.
+        Extract text from an image file or PIL Image.
 
         Args:
-            image_path: Path to image file
+            image: Path to image file (str) or PIL Image object
             psm: Optional page segmentation mode
 
         Returns:
             Extracted text as string
         """
-        img = Image.open(image_path)
+        # Handle both file path and PIL Image
+        if isinstance(image, Image.Image):
+            img = image
+        else:
+            img = Image.open(image)
         return self.pil_to_text(img, psm=psm)
 
     def pil_to_text(self, pil_image, psm=None):
@@ -256,18 +273,18 @@ class TesseractOCR:
 
         return text.strip()
 
-    def image_to_text_with_confidence(self, image_path, psm=None):
+    def image_to_text_with_confidence(self, image, psm=None):
         """
         Extract text with confidence score.
 
         Args:
-            image_path: Path to image file
+            image: Path to image file (str) or PIL Image object
             psm: Optional page segmentation mode
 
         Returns:
             Tuple of (text, confidence_percentage)
         """
-        text = self.image_to_text(image_path, psm=psm)
+        text = self.image_to_text(image, psm=psm)
         confidence = self.tess_lib.TessBaseAPIMeanTextConf(self.api)
         return text, confidence
 
