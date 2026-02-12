@@ -1,9 +1,10 @@
 """
-Example usage of TesseractWrapper.
+Example usage of TesseractOCR wrapper.
 """
 
 from tesseract_ocr import TesseractOCR
 from PIL import Image, ImageDraw, ImageFont
+import os
 
 
 def create_sample_image():
@@ -23,7 +24,7 @@ def create_sample_image():
 
 def main():
     print("=" * 50)
-    print("TesseractWrapper Example")
+    print("TesseractOCR Wrapper - Examples")
     print("=" * 50)
 
     # Create sample image
@@ -31,41 +32,53 @@ def main():
     image_path = create_sample_image()
     print(f"   Created: {image_path}")
 
-    # Basic usage with context manager
-    print("\n2. Basic OCR...")
+    # Check Tesseract version
+    print("\n2. Checking Tesseract version...")
+    with TesseractOCR() as ocr:
+        print(f"   Version: {ocr.version()}")
+
+    # Basic OCR with file path
+    print("\n3. Basic OCR (file path)...")
     with TesseractOCR() as ocr:
         text = ocr.image_to_text(image_path)
         print(f"   Result: '{text}'")
 
+    # OCR with PIL Image object (both work now!)
+    print("\n4. OCR with PIL Image object...")
+    with TesseractOCR() as ocr:
+        img = Image.open(image_path)
+        text = ocr.image_to_text(img)  # Can pass PIL Image directly!
+        print(f"   Result: '{text}'")
+
     # With confidence score
-    print("\n3. OCR with confidence...")
+    print("\n5. OCR with confidence score...")
     with TesseractOCR() as ocr:
         text, confidence = ocr.image_to_text_with_confidence(image_path)
         print(f"   Result: '{text}'")
         print(f"   Confidence: {confidence}%")
 
-    # Single line mode
-    print("\n4. Single line mode (PSM 7)...")
+    # Single line mode (PSM 7)
+    print("\n6. Single line mode (PSM 7)...")
     with TesseractOCR() as ocr:
         text = ocr.image_to_text(image_path, psm=TesseractOCR.PSM_SINGLE_LINE)
         print(f"   Result: '{text}'")
 
-    # From PIL image directly
-    print("\n5. From PIL Image...")
+    # Cropped region from PIL Image
+    print("\n7. Cropped region from PIL Image...")
     with TesseractOCR() as ocr:
         img = Image.open(image_path)
-        text = ocr.pil_to_text(img)
+        cropped = img.crop((20, 20, 250, 80))  # Crop a region
+        text = ocr.image_to_text(cropped)
         print(f"   Result: '{text}'")
 
     # Digits only mode
-    print("\n6. Digits only mode...")
+    print("\n8. Digits only mode (whitelist)...")
     with TesseractOCR() as ocr:
         ocr.set_variable('tessedit_char_whitelist', '0123456789')
         text = ocr.image_to_text(image_path)
         print(f"   Result: '{text}'")
 
     # Cleanup
-    import os
     os.remove(image_path)
 
     print("\n" + "=" * 50)
